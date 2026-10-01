@@ -103,6 +103,10 @@ const CAP=Object.fromEntries(CAPRAW.split(",").map(s=>s.split(":")));
 let mode="flags",pool=COUNTRIES,size=10,queue=[],idx=0,score=0,locked=false;
 const label=o=>mode==="flags"?o.n:CAP[o.c];
 
+const GROUPS="cm,sn,ml,gh,bo,et,lt;ie,ci,it,mx,ne,in,hu,bg,ir;ru,sk,si,rs,hr,nl,lu,py;se,no,dk,fi,is;ro,td,md;id,pl,sg,at,lv,pe;au,nz,fj,gb;us,my,cu,cl;eg,sy,iq,ye,sd,kw,jo,ae;ar,uy,gt,hn,sv,ni,cr,gr,il;co,ec,ve;cz,ph;jp,bd;cn,vn,ma,tn,tr;pk,dz,sa,mr;be,de,ug;ua,kz";
+const SIM={};
+GROUPS.split(";").forEach(g=>{const a=g.split(",");a.forEach(c=>{SIM[c]=SIM[c]||new Set();a.forEach(d=>{if(d!==c)SIM[c].add(d)})})});
+
 function start(n){
   size=n;pool=mode==="caps"?COUNTRIES.filter(x=>CAP[x.c]):COUNTRIES;
   queue=shuffle(pool).slice(0,n);idx=0;score=0;
@@ -129,7 +133,8 @@ function ask(){
     flag.innerHTML='<div class="q"><span>¿Cuál es la capital de</span><strong>'+cur.n+'?</strong></div>';
   }
 
-  const wrong=shuffle(pool.filter(x=>x.c!==cur.c)).slice(0,4);
+  const sim=(mode==="flags"&&SIM[cur.c])?shuffle(pool.filter(x=>SIM[cur.c].has(x.c))).slice(0,3):[];
+  const wrong=[...sim,...shuffle(pool.filter(x=>x.c!==cur.c&&!sim.includes(x))).slice(0,3-sim.length)];
   const opts=$("opts");opts.innerHTML="";
   shuffle([cur,...wrong]).forEach(o=>{
     const b=document.createElement("button");
