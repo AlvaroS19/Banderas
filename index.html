@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banderas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#eef2f6;--card:#fff;--ink:#1b2a41;--mute:#5c6b80;--line:#d3dbe5;--accent:#2f5fd0;--ok:#1f9d55;--ko:#d64545;--okbg:#e4f5ea;--kobg:#fbe6e6}
+@media(prefers-color-scheme:dark){:root{--bg:#121a26;--card:#1b2636;--ink:#e8eef6;--mute:#93a2b8;--line:#2e3c52;--accent:#7ca0ff;--okbg:#17372a;--kobg:#401f23}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif;display:flex;justify-content:center;padding:24px 16px}
+main{width:100%;max-width:520px}
+h1{font-size:2.2rem;font-weight:800;line-height:1.1;margin:8px 0 12px;letter-spacing:-.02em}
+p{color:var(--mute);margin:0 0 20px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sizes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.size{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:20px 0;font-size:1.8rem;font-weight:800}
+.size small{display:block;font-size:.8rem;font-weight:400;color:var(--mute)}
+.size:hover{border-color:var(--accent)}
+.bar{display:flex;justify-content:space-between;font-weight:600;margin-bottom:12px}
+.track{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:18px}
+.fill{height:100%;background:var(--accent);width:0;transition:width .3s}
+.flag{background:var(--card);border:2px solid var(--line);border-radius:14px;height:300px;display:flex;align-items:center;justify-content:center;padding:14px;margin-bottom:16px}
+.flag .err{font-size:.95rem;text-align:center;margin:0}
+.flag img{max-width:100%;max-height:100%;box-shadow:0 0 0 1px var(--line)}
+.flag .emo{font-size:7rem}
+.opts{display:grid;gap:10px}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:14px 16px;text-align:left;font-size:1.05rem;font-weight:600}
+.opt:not(:disabled):hover{border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.opt.ko{background:var(--kobg);border-color:var(--ko);color:var(--ko)}
+.next,.again{margin-top:16px;width:100%;background:var(--accent);color:#fff;border:0;border-radius:12px;padding:14px;font-weight:800;font-size:1.05rem}
+.big{font-size:5rem;font-weight:800;line-height:1;margin:16px 0 4px}
+.link{background:none;border:0;color:var(--accent);font-weight:600;margin-top:12px;width:100%;padding:8px}
+.tools{display:flex;gap:8px;margin-top:8px}
+.tools .link{width:auto;flex:1;margin-top:4px}
+:root{--onacc:#fff}
+@media(prefers-color-scheme:dark){:root{--onacc:#0d1624}}
+.next,.again{color:var(--onacc)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.mode{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:12px;font-weight:800;font-size:1.05rem}
+.mode.on{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.q{text-align:center}
+.q span{display:block;color:var(--mute);margin-bottom:6px}
+.q strong{font-size:2.4rem;font-weight:800;line-height:1.1}
+@media(prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <section id="menu">
+    <h1>Juegos de países</h1>
+    <p>Elige un modo y cuántas preguntas quieres en la partida.</p>
+    <div class="modes" role="group" aria-label="Modo de juego">
+      <button class="mode on" data-m="flags" aria-pressed="true">Banderas</button>
+      <button class="mode" data-m="caps" aria-pressed="false">Capitales</button>
+    </div>
+    <div class="sizes">
+      <button class="size" data-n="10">10<small>partida rápida</small></button>
+      <button class="size" data-n="25">25<small>partida normal</small></button>
+      <button class="size" data-n="50">50<small>partida larga</small></button>
+      <button class="size" data-n="100">100<small>maratón</small></button>
+    </div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="bar"><span id="prog"></span><span id="score"></span></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="flag" id="flag"></div>
+    <div class="opts" id="opts"></div>
+    <button class="next" id="next" hidden></button>
+    <div class="tools">
+      <button class="link" id="restart">Reiniciar partida</button>
+      <button class="link" id="home">Menú principal</button>
+    </div>
+  </section>
+
+  <section id="end" hidden>
+    <h1>Partida terminada</h1>
+    <div class="big" id="final"></div>
+    <p id="msg"></p>
+    <button class="again" id="again"></button>
+    <button class="link" id="menuBtn">Cambiar número de banderas</button>
+  </section>
+</main>
+
+<script>
+const RAW="es:España,fr:Francia,de:Alemania,it:Italia,pt:Portugal,gb:Reino Unido,ie:Irlanda,nl:Países Bajos,be:Bélgica,ch:Suiza,at:Austria,se:Suecia,no:Noruega,dk:Dinamarca,fi:Finlandia,is:Islandia,pl:Polonia,cz:Chequia,sk:Eslovaquia,hu:Hungría,ro:Rumanía,bg:Bulgaria,gr:Grecia,hr:Croacia,rs:Serbia,si:Eslovenia,ba:Bosnia y Herzegovina,al:Albania,mk:Macedonia del Norte,me:Montenegro,ua:Ucrania,by:Bielorrusia,lt:Lituania,lv:Letonia,ee:Estonia,md:Moldavia,lu:Luxemburgo,mt:Malta,cy:Chipre,ru:Rusia,tr:Turquía,ge:Georgia,am:Armenia,az:Azerbaiyán,kz:Kazajistán,uz:Uzbekistán,us:Estados Unidos,ca:Canadá,mx:México,gt:Guatemala,hn:Honduras,sv:El Salvador,ni:Nicaragua,cr:Costa Rica,pa:Panamá,cu:Cuba,do:República Dominicana,ht:Haití,jm:Jamaica,bs:Bahamas,co:Colombia,ve:Venezuela,ec:Ecuador,pe:Perú,bo:Bolivia,cl:Chile,ar:Argentina,uy:Uruguay,py:Paraguay,br:Brasil,gy:Guyana,sr:Surinam,ma:Marruecos,dz:Argelia,tn:Túnez,ly:Libia,eg:Egipto,sd:Sudán,et:Etiopía,ke:Kenia,tz:Tanzania,ug:Uganda,ng:Nigeria,gh:Ghana,sn:Senegal,ci:Costa de Marfil,cm:Camerún,ao:Angola,mz:Mozambique,zm:Zambia,zw:Zimbabue,na:Namibia,bw:Botsuana,za:Sudáfrica,mg:Madagascar,ml:Malí,ne:Níger,td:Chad,so:Somalia,rw:Ruanda,cd:República Democrática del Congo,cg:República del Congo,ga:Gabón,mr:Mauritania,sa:Arabia Saudí,ae:Emiratos Árabes Unidos,qa:Catar,kw:Kuwait,om:Omán,ye:Yemen,iq:Irak,ir:Irán,il:Israel,jo:Jordania,lb:Líbano,sy:Siria,af:Afganistán,pk:Pakistán,in:India,bd:Bangladés,lk:Sri Lanka,np:Nepal,cn:China,jp:Japón,kr:Corea del Sur,kp:Corea del Norte,mn:Mongolia,th:Tailandia,vn:Vietnam,la:Laos,kh:Camboya,mm:Myanmar,my:Malasia,sg:Singapur,id:Indonesia,ph:Filipinas,au:Australia,nz:Nueva Zelanda,pg:Papúa Nueva Guinea,fj:Fiyi";
+const COUNTRIES=RAW.split(",").map(s=>{const i=s.indexOf(":");return{c:s.slice(0,i),n:s.slice(i+1)}});
+
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const emoji=c=>String.fromCodePoint(...[...c.toUpperCase()].map(x=>127397+x.charCodeAt()));
+const show=id=>["menu","game","end"].forEach(s=>$(s).hidden=s!==id);
+
+const CAPRAW="es:Madrid,fr:París,de:Berlín,it:Roma,pt:Lisboa,gb:Londres,ie:Dublín,nl:Ámsterdam,be:Bruselas,ch:Berna,at:Viena,se:Estocolmo,no:Oslo,dk:Copenhague,fi:Helsinki,is:Reikiavik,pl:Varsovia,cz:Praga,sk:Bratislava,hu:Budapest,ro:Bucarest,bg:Sofía,gr:Atenas,hr:Zagreb,rs:Belgrado,si:Liubliana,ba:Sarajevo,al:Tirana,mk:Skopie,me:Podgorica,ua:Kiev,by:Minsk,lt:Vilna,lv:Riga,ee:Tallin,md:Chisináu,lu:Luxemburgo,mt:La Valeta,cy:Nicosia,ru:Moscú,tr:Ankara,ge:Tiflis,am:Ereván,az:Bakú,kz:Astaná,uz:Taskent,us:Washington D. C.,ca:Ottawa,mx:Ciudad de México,gt:Ciudad de Guatemala,hn:Tegucigalpa,sv:San Salvador,ni:Managua,cr:San José,pa:Panamá,cu:La Habana,do:Santo Domingo,ht:Puerto Príncipe,jm:Kingston,bs:Nasáu,co:Bogotá,ve:Caracas,ec:Quito,pe:Lima,cl:Santiago,ar:Buenos Aires,uy:Montevideo,py:Asunción,br:Brasilia,gy:Georgetown,sr:Paramaribo,ma:Rabat,dz:Argel,tn:Túnez,ly:Trípoli,eg:El Cairo,sd:Jartum,et:Adís Abeba,ke:Nairobi,tz:Dodoma,ug:Kampala,ng:Abuya,gh:Acra,sn:Dakar,ci:Yamusukro,cm:Yaundé,ao:Luanda,mz:Maputo,zm:Lusaka,zw:Harare,na:Windhoek,bw:Gaborone,za:Pretoria,mg:Antananarivo,ml:Bamako,ne:Niamey,td:Yamena,so:Mogadiscio,rw:Kigali,cd:Kinsasa,cg:Brazzaville,ga:Libreville,mr:Nuakchot,sa:Riad,ae:Abu Dabi,qa:Doha,kw:Ciudad de Kuwait,om:Mascate,ye:Saná,iq:Bagdad,ir:Teherán,jo:Amán,lb:Beirut,sy:Damasco,af:Kabul,pk:Islamabad,in:Nueva Delhi,bd:Daca,lk:Sri Jayawardenapura Kotte,np:Katmandú,cn:Pekín,jp:Tokio,kr:Seúl,kp:Pionyang,mn:Ulán Bator,th:Bangkok,vn:Hanói,la:Vientián,kh:Nom Pen,mm:Naipyidó,my:Kuala Lumpur,sg:Singapur,id:Yakarta,ph:Manila,au:Canberra,nz:Wellington,pg:Port Moresby,fj:Suva";
+const CAP=Object.fromEntries(CAPRAW.split(",").map(s=>s.split(":")));
+
+let mode="flags",pool=COUNTRIES,size=10,queue=[],idx=0,score=0,locked=false;
+const label=o=>mode==="flags"?o.n:CAP[o.c];
+
+function start(n){
+  size=n;pool=mode==="caps"?COUNTRIES.filter(x=>CAP[x.c]):COUNTRIES;
+  queue=shuffle(pool).slice(0,n);idx=0;score=0;
+  show("game");ask();
+}
+
+function ask(){
+  locked=false;
+  const cur=queue[idx];
+  $("prog").textContent=(mode==="flags"?"Bandera ":"Pregunta ")+(idx+1)+" de "+size;
+  $("score").textContent="Aciertos: "+score+"/"+size;
+  $("fill").style.width=(idx/size*100)+"%";
+  $("next").hidden=true;
+
+  const flag=$("flag");flag.innerHTML="";
+  if(mode==="flags"){
+    const img=new Image();
+    img.alt="Bandera de un país";
+    img.src="https://flagcdn.com/w640/"+cur.c+".png";
+    img.onerror=()=>{flag.innerHTML='<p class="err">No se ha podido cargar la bandera. Abre este archivo en tu navegador con conexión a internet.</p>'};
+    flag.appendChild(img);
+    if(queue[idx+1])new Image().src="https://flagcdn.com/w640/"+queue[idx+1].c+".png";
+  }else{
+    flag.innerHTML='<div class="q"><span>¿Cuál es la capital de</span><strong>'+cur.n+'?</strong></div>';
+  }
+
+  const wrong=shuffle(pool.filter(x=>x.c!==cur.c)).slice(0,4);
+  const opts=$("opts");opts.innerHTML="";
+  shuffle([cur,...wrong]).forEach(o=>{
+    const b=document.createElement("button");
+    b.className="opt";b.textContent=label(o);b.dataset.c=o.c;
+    b.onclick=()=>answer(b,cur);
+    opts.appendChild(b);
+  });
+}
+
+function answer(btn,cur){
+  if(locked)return;locked=true;
+  const right=btn.dataset.c===cur.c;
+  if(right){score++;btn.classList.add("ok")}
+  else{btn.classList.add("ko");[...$("opts").children].find(b=>b.dataset.c===cur.c).classList.add("ok")}
+  [...$("opts").children].forEach(b=>b.disabled=true);
+  $("score").textContent="Aciertos: "+score+"/"+size;
+  $("fill").style.width=((idx+1)/size*100)+"%";
+  const last=idx===size-1;
+  $("next").textContent=last?"Ver resultado":"Siguiente bandera";
+  $("next").hidden=false;$("next").focus();
+}
+
+$("next").onclick=()=>{
+  idx++;
+  if(idx>=size)finish();else ask();
+};
+
+function finish(){
+  show("end");
+  $("final").textContent=score+"/"+size;
+  const p=score/size;
+  $("msg").textContent=p===1?"Perfecto, no has fallado ninguna.":p>=.8?"Muy bien, dominas el mapa.":p>=.5?"Buen resultado, sigue practicando.":"Otra partida y mejoras seguro.";
+  $("again").textContent="Jugar otra vez ("+size+(mode==="flags"?" banderas":" capitales")+")";
+}
+
+document.querySelectorAll(".size").forEach(b=>b.onclick=()=>start(+b.dataset.n));
+document.querySelectorAll(".mode").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;
+  document.querySelectorAll(".mode").forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-pressed",x===b)});
+});
+$("again").onclick=()=>start(size);
+$("menuBtn").onclick=()=>show("menu");
+$("restart").onclick=()=>start(size);
+$("home").onclick=()=>show("menu");
+</script>
+</body>
+</html>
